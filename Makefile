@@ -12,7 +12,7 @@ all: DANG
 
 DANG: $(OBJECTS)
 	ar -rcs libDANG.a $(ODIR)/dang.o
-$(ODIR)/%.o: %.c $(DEPS) 
+$(ODIR)/%.o: %.c 
 	$(CC) -c $(CFLAGS) $< -o $@
 
 common:
