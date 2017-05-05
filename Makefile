@@ -1,22 +1,19 @@
-DANG_VERSION := "0.01-prerelease"
-BUILD_DATE := "$(shell date)"
-ODIR= objects
-CC=clang
-DEPS= common.h
-CFLAGS= -O3 -DDANG_VERSION=\"$(DANG_VERSION)\" -DDANG_BUILD_DATE=\"$(BUILD_DATE)\"
-SOURCES = dang.c llist.c vector.c common.c
-_OBJ = $(SOURCES:.c=.o)
-OBJECTS = $(patsubst %,$(ODIR)/%,$(_OBJ))
+CC=gcc
+CFLAGS = -O3 -g -IDANG
 
-all: DANG
+SOURCES = common.c llist.c vector.c
+OBJECTS = $(SOURCES:.c=.o)
+EXECUTABLE = libDANG.a
+INSTALLPATH = /usr/local/bin/
 
-DANG: $(OBJECTS)
-	ar -rcs libDANG.a $(ODIR)/dang.o
-$(ODIR)/%.o: %.c 
+all: $(SOURCES) $(EXECUTABLE)
+	rm -rf *.o
+
+$(EXECUTABLE): $(OBJECTS) 
+	ar -rc libDANG.a  $(OBJECTS) 
+
+.c.o:
 	$(CC) -c $(CFLAGS) $< -o $@
 
-common:
-	$(CC) -c common.c -o common.o
-clean:
-	rm $(ODIR)/*.o -f
-	rm libDang.a
+clean: 
+	rm -f $(EXECUTABLE) *.o *~ 
