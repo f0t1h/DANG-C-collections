@@ -96,7 +96,7 @@ int vector_free( vector_t *vector){
 	return 0;
 }
 
-int main_test(int argc, char **argv){
+int main(int argc, char **argv){
 	vector_t *vector = vector_init(sizeof(int),4);
 	int i;
 	for(i=0;i<10;i++){
