@@ -1,4 +1,4 @@
-#include "vector.h"
+#include "DANG/vector.h"
 vector_t *vector_init(size_t item_sizeof, size_t initial_limit){
 	vector_t *new_vector = (vector_t *) getMem( sizeof(vector_t));
 	new_vector->item_sizeof = item_sizeof;
@@ -11,7 +11,7 @@ vector_t *vector_init(size_t item_sizeof, size_t initial_limit){
 
 int vector_put(vector_t *vector, void *item){
 	if(vector->limit == vector->size){
-		size_t new_limit = vector->limit +( vector->limit>>1);
+		size_t new_limit = vector->limit +( vector->limit>>1) + 1;
 		resizeMem((void **)&(vector->items),vector->limit * sizeof(void *),sizeof(void *) * new_limit);
 		vector->limit = new_limit;
 	}
@@ -29,7 +29,7 @@ void vector_update_remove_policy(vector_t *vector, int policy){
 int vector_contains(vector_t *vector, void *item){
 	int i;
 	for(i=0;i<vector->size;i++){
-		if(vector->items[i] == item){
+		if(memcmp(vector->items[i], item,vector->item_sizeof)){
 			return i;
 		}
 	}
@@ -83,9 +83,14 @@ void *vector_get( vector_t *vector, size_t index){
 	return vector->items[index];
 }
 
-void *vector_peek(vector_t *vector){
+void *vector_tail(vector_t *vector){
 	return vector->items[vector->size-1];
 }
+
+void *vector_head(vector_t *vector){
+	return vector->items[0];
+}
+
 int vector_free( vector_t *vector){
 	int i;
 	for(i = 0; i< vector->size;i++){

@@ -18,8 +18,10 @@ typedef struct __vector_t{
 vector_t *vector_init(size_t item_sizeof, size_t initial_limit);
 int vector_put(vector_t *vector, void* item);
 int vector_remove(vector_t *vector, size_t index);
+int vector_contains(vector_t *vector, void *item);
 void *vector_get(vector_t *vector, size_t index); //Optional for index check
-void *vector_peek(vector_t *vector);
+void *vector_head(vector_t *vector);
+void *vector_tail(vector_t *vector);
 int vector_free(vector_t *vector);
 void vector_zip(vector_t *vector);
 void vector_clear(vector_t *vector);

@@ -1,5 +1,6 @@
 CC=clang
-CFLAGS = -Wall -O3 -g -IDANG
+CFLAGS = -Wall -O3 -g
+LFLAGS = 
 SOURCES = common.c llist.c vector.c
 OBJECTS = $(SOURCES:.c=.o)
 EXECUTABLE = libDANG.a
@@ -10,9 +11,9 @@ all: $(SOURCES) $(EXECUTABLE)
 
 $(EXECUTABLE): $(OBJECTS) 
 	ar -rc libDANG.a  $(OBJECTS) 
-
+	ranlib libDANG.a
 .c.o:
-	$(CC) -c $(CFLAGS) $< -o $@
+	$(CC) -c $(CFLAGS) $(LFLAGS) $< -o $@
 
 clean: 
 	rm -f $(EXECUTABLE) *.o *~ 
