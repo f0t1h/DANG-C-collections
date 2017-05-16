@@ -1,6 +1,5 @@
-CC=gcc
-CFLAGS = -O3 -g -IDANG
-
+CC=clang
+CFLAGS = -Wall -O3 -g -IDANG
 SOURCES = common.c llist.c vector.c
 OBJECTS = $(SOURCES:.c=.o)
 EXECUTABLE = libDANG.a
