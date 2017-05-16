@@ -30,10 +30,10 @@ int vector_contains(vector_t *vector, void *item){
 	int i;
 	for(i=0;i<vector->size;i++){
 		if(vector->items[i] == item){
-			return 1;
+			return i;
 		}
 	}
-	return 0;
+	return -1;
 }
 
 int vector_remove(vector_t *vector, size_t index){
@@ -96,7 +96,7 @@ int vector_free( vector_t *vector){
 	return 0;
 }
 
-int main(int argc, char **argv){
+int main_test(int argc, char **argv){
 	vector_t *vector = vector_init(sizeof(int),4);
 	int i;
 	for(i=0;i<10;i++){
