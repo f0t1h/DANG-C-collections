@@ -39,7 +39,6 @@ int head_tail_zip_test(){
 	}
 	vector_zip(test);
 	return !((*(int*)vector_head(test)) == 0 && (*(int*)vector_tail(test))==49);
-
 }
 
 int (*tests[])(void) = {

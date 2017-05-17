@@ -36,6 +36,14 @@ int vector_contains(vector_t *vector, void *item){
 	return -1;
 }
 
+int vector_contract(vector_t *vector){
+	//TODO
+}
+
+void vector_insert(vector_t *vector, void *item, size_t index){
+	//TODO
+}
+
 int vector_remove(vector_t *vector, size_t index){
 	if(vector->items[index] == NULL || vector->size <= index){
 		return -1;
@@ -43,19 +51,18 @@ int vector_remove(vector_t *vector, size_t index){
 	vector->size--;
 	switch(vector->REMOVE_POLICY){
 	case REMP_SORTED:
-		freeMem(vector->items[index],sizeof(vector->item_sizeof));
+		freeMem(vector->items[index],vector->item_sizeof);
 		int i;
 		for(i=index;i<vector->size;i++){
 			vector->items[i] = vector->items[i+1];
 		}
 	break;
 	case REMP_FAST:
-		freeMem(vector->items[index],sizeof(vector->item_sizeof));
+		freeMem(vector->items[index],vector->item_sizeof);
 		vector->items[index] = vector->items[vector->size];
 	break;
 	case REMP_LAZY:
-		fprintf(stderr,"Not Implemented Yet!!\n");
-		exit(-1);
+		freeMem(vector->items[index],vector->item_sizeof);
 	break;
 	default:
 		fprintf(stderr,"UNKNOWN POLICY %d\n", vector->REMOVE_POLICY);
