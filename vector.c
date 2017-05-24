@@ -9,6 +9,26 @@ vector_t *vector_init(size_t item_sizeof, size_t initial_limit){
 	return new_vector;
 }
 
+void vector_tabularasa(vector_t *vector){
+/*
+	int i;
+	for(i=0;i<vector->items;i++){
+		vector->items[i] = NULL;
+	}
+*/
+	vector->size = 0;
+}
+
+void vector_soft_put(vector_t *vector, void *item){
+	if(vector->limit == vector->size){
+		size_t new_limit = vector->limit +( vector->limit>>1) + 1;
+		resizeMem((void **)&(vector->items),vector->limit * sizeof(void *),sizeof(void *) * new_limit);
+		vector->limit = new_limit;
+	}
+	vector->items[vector->size] = item;
+	vector->size++;
+}
+
 int vector_put(vector_t *vector, void *item){
 	if(vector->limit == vector->size){
 		size_t new_limit = vector->limit +( vector->limit>>1) + 1;
@@ -36,7 +56,7 @@ int vector_contains(vector_t *vector, void *item){
 	return -1;
 }
 
-int vector_contract(vector_t *vector){
+int vector_defragment(vector_t *vector){
 	//TODO
 }
 
@@ -63,6 +83,7 @@ int vector_remove(vector_t *vector, size_t index){
 	break;
 	case REMP_LAZY:
 		freeMem(vector->items[index],vector->item_sizeof);
+		vector->items[index] = NULL;
 	break;
 	default:
 		fprintf(stderr,"UNKNOWN POLICY %d\n", vector->REMOVE_POLICY);
@@ -108,20 +129,22 @@ int vector_free( vector_t *vector){
 	return 0;
 }
 
-int main_test(int argc, char **argv){
+int main(int argc, char **argv){
 	vector_t *vector = vector_init(sizeof(int),4);
+	vector_t *v2 = vector_init(sizeof(int),4);
 	int i;
 	for(i=0;i<10;i++){
 		vector_put(vector,&i);
+		vector_soft_put(v2,vector_get(vector,i));
 	}
 	vector->REMOVE_POLICY = REMP_FAST;
 	vector_remove(vector,5);
 	int *element;
 	for(i=0;i<vector->size;i++){
-		element = vector_get(vector,i);		
+		element = vector_get(v2,i);		
 		printf("%d\n",*element);
 	}
-	vector_free(vector);
+//	vector_free(vector);
 	return 0;
 }
 

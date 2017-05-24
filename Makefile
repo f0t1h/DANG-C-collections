@@ -1,7 +1,7 @@
 CC=clang
 CFLAGS = -Wall -O3 -g
 LFLAGS = 
-SOURCES = common.c llist.c vector.c
+SOURCES = common.c llist.c vector.c hashtable.c
 OBJECTS = $(SOURCES:.c=.o)
 EXECUTABLE = libDANG.a
 INSTALLPATH = /usr/local/bin/
