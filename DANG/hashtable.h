@@ -36,4 +36,5 @@ void ht_remove(hashtable_t *table, void *key);
 pair_t *ht_get(hashtable_t *table, void *key);
 void *ht_get_value(hashtable_t *table, void *key);
 int ht_has_key(hashtable_t *table, void *key);
+void ht_free(hashtable_t *table);
 #endif

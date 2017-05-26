@@ -44,6 +44,26 @@ void graph_put_edge(graph_t *g, void *i1, void *i2){
 */
 }
 
+void graph_free(graph_t *g){
+	int i,j,k;
+	vector_t *bucket;
+	pair_t *pair;
+	vector_t *vect;
+	for(i=0;i<g->size;i++){
+		bucket = g->buckets[i];
+		for(j=0;j<bucket->size;j++){
+			pair = vector_get(bucket,j);
+			vect = pair->value;
+			for(k=0;k<vect->size;k++){
+				free(vect->items[k]);
+			}
+			free(vect->items);
+		}	
+	}
+	ht_free(g);
+}
+
+
 int main(int argc, char **argv){
 	graph_t *g = graph_init(4,sizeof(int));
 
@@ -72,6 +92,9 @@ int main(int argc, char **argv){
 			printf("\tedge = %d\n",*edge);
 		}		
 	}
-
+	vector_free(pairs);
+//	free(pairs->items);
+//	free(pairs);
+	graph_free(g);
 	return 0;
 }
