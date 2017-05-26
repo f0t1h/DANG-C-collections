@@ -29,6 +29,7 @@ typedef struct __hashtable_t{
 
 void ht_load_factor_check(hashtable_t *table);
 hashtable_t *ht_init( size_t table_size, size_t key_size,size_t item_size);
+vector_t *ht_to_vector(hashtable_t *table);
 size_t ht_default_hash_function(hashtable_t *table, void *key);
 void *ht_put(hashtable_t *table, void *key);
 void ht_remove(hashtable_t *table, void *key);

@@ -186,6 +186,7 @@ void ht_load_factor_check(hashtable_t *table){
 		ht_expand(table);
 	}
 	else if (lf < table->optimal_load_factor-0.2){
+//		Is Auto-shrinking really a good idea?
 //		ht_shrink(table);
 	}
 }
@@ -202,7 +203,7 @@ void ht_free(hashtable_t *table){
 	free(table->buckets);
 	free(table);
 }
-int main(int argc, char **argv){
+int test_ht(int argc, char **argv){
 	hashtable_t *table = ht_init(4,sizeof(int),sizeof(int));
 	int i;
 	int *val;
@@ -216,16 +217,11 @@ int main(int argc, char **argv){
 	for(i=0;i<32;i+=2){
 		ht_remove(table,&i);
 	}
-
-	vector_t *pairs = ht_to_vector(table);
-	pair_t *p = NULL;
-	for(i=0;i<pairs->size;i++){
-		p=vector_get(pairs,i);
-		if(p==NULL){printf("p is null\n");}
-		if(p->key==NULL){printf("p's key is null\n");}
-		printf("%d->%d\n",*(int *)p->key,*(int *)p->value);//,*(int *)p->value);
+	int *tmp;
+	for(i=0;i<112;i++){
+		tmp = ht_get_value(table,&i);
+		printf("%d\n",tmp!=NULL?*tmp:-1);
 	}
-	vector_free(pairs);
 	ht_free(table);
 	return 0;
 }
