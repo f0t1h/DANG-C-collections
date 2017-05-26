@@ -7,8 +7,9 @@
 #include "vector.h"
 
 #define INIT_BUCKET_SIZE 4
-#define UPPER_BOUND_LOAD_FACTOR 0.8
-#define LOWER_BOUND_LOAD_FACTOR 0.1
+#define OPTIMAL_LOAD_FACTOR 0.5
+#define UPPER_BOUND_LOAD_FACTOR (OPTIMAL_LOAD_FACTOR+0.3)
+#define LOWER_BOUND_LOAD_FACTOR (OPTIMAL_LOAD_FACTOR-0.3)
 
 typedef struct __pair_t{
 	void *key;
@@ -22,12 +23,12 @@ typedef struct __hashtable_t{
 	size_t key_size;
 	size_t value_size;
 	size_t number_of_items;
-	double upper_load_factor;
-	double lower_load_factor;
-	size_t (*hf)(void *key, size_t table_size, size_t key_size);
+	double optimal_load_factor;
+	size_t (*hf)(struct __hashtable_t *table, void *key);
 } hashtable_t;
 
-hashtable_t *ht_init( size_t table_size, size_t item_size);
+void ht_load_factor_check(hashtable_t *table);
+hashtable_t *ht_init( size_t table_size, size_t key_size,size_t item_size);
 size_t ht_default_hash_function(hashtable_t *table, void *key);
 void *ht_put(hashtable_t *table, void *key);
 void ht_remove(hashtable_t *table, void *key);

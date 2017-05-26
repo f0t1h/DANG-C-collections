@@ -10,12 +10,12 @@ vector_t *vector_init(size_t item_sizeof, size_t initial_limit){
 }
 
 void vector_tabularasa(vector_t *vector){
-/*
+
 	int i;
-	for(i=0;i<vector->items;i++){
+	for(i=0;i<vector->size;i++){
 		vector->items[i] = NULL;
 	}
-*/
+
 	vector->size = 0;
 }
 
@@ -129,18 +129,16 @@ int vector_free( vector_t *vector){
 	return 0;
 }
 
-int main(int argc, char **argv){
+int test(int argc, char **argv){
 	vector_t *vector = vector_init(sizeof(int),4);
 	vector_t *v2 = vector_init(sizeof(int),4);
-	int i;
-	for(i=0;i<10;i++){
-		vector_put(vector,&i);
-		vector_soft_put(v2,vector_get(vector,i));
+	int i,j;
+	for(j=0;j<10;j++){
+//		vector_put(vector,&i);
+		vector_soft_put(v2,&j);
 	}
-	vector->REMOVE_POLICY = REMP_FAST;
-	vector_remove(vector,5);
 	int *element;
-	for(i=0;i<vector->size;i++){
+	for(i=0;i<v2->size;i++){
 		element = vector_get(v2,i);		
 		printf("%d\n",*element);
 	}
