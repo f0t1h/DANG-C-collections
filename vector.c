@@ -6,6 +6,9 @@ vector_t *vector_init(size_t item_sizeof, size_t initial_limit){
 	new_vector->limit = initial_limit;
 	new_vector->size = 0;
 	new_vector->REMOVE_POLICY = 0;
+	new_vector->fragmental=0;
+	new_vector->rmv = &free;
+	
 	return new_vector;
 }
 
@@ -49,7 +52,17 @@ void vector_update_remove_policy(vector_t *vector, int policy){
 int vector_contains(vector_t *vector, void *item){
 	int i;
 	for(i=0;i<vector->size;i++){
-		if(memcmp(vector->items[i], item,vector->item_sizeof)){
+		if(memcmp(vector->items[i], item,vector->item_sizeof)==0){
+			return i;
+		}
+	}
+	return -1;
+}
+
+int vector_comptains(vector_t *vector, void *item, int (*cmp)(const void*, const void*)){
+	int i;
+	for(i=0;i<vector->size;i++){
+		if(cmp(vector->items[i],item)==0){
 			return i;
 		}
 	}
@@ -57,33 +70,79 @@ int vector_contains(vector_t *vector, void *item){
 }
 
 int vector_defragment(vector_t *vector){
-	//TODO
+	if(vector->fragmental==0){
+		return 0;
+	}
+	int i = 0;
+	int j = 0;
+	while(i<vector->size){
+		++i;
+		if(vector->items[j]!=NULL){
+			++j;
+		}
+		else{
+			vector->fragmental--;
+		}
+		if(i!=j){
+			vector->items[j]=vector->items[i];
+		}
+	}
+	vector->fragmental=0;
+	vector->size = j;
+	return 1;
 }
 
 void vector_insert(vector_t *vector, void *item, size_t index){
-	//TODO
+	if(vector->limit == vector->size){
+		size_t new_limit = vector->limit +( vector->limit>>1) + 1;
+		resizeMem((void **)&(vector->items),vector->limit * sizeof(void *),sizeof(void *) * new_limit);
+		vector->limit = new_limit;
+	}
+
+	size_t i;
+	size_t target = vector->size;
+	if(vector->fragmental>0){	
+		for(i=index;i<vector->size;i++){
+			if(vector->items[i]==NULL){
+				target=i;
+				vector->fragmental--;
+				break;
+			}
+
+		}
+	}
+	for(i=target;i>index;i--){
+		vector->items[i]=vector->items[i-1];
+	}
+	vector->items[index] = getMem(vector->item_sizeof);
+	memcpy( vector->items[index],item,vector->item_sizeof);
+	vector->size = vector->size + 1;
 }
 
 int vector_remove(vector_t *vector, size_t index){
 	if(vector->items[index] == NULL || vector->size <= index){
 		return -1;
 	}
-	vector->size--;
+
 	switch(vector->REMOVE_POLICY){
 	case REMP_SORTED:
-		freeMem(vector->items[index],vector->item_sizeof);
+		vector->rmv(vector->items[index]);
+
+		vector->size--;
 		int i;
 		for(i=index;i<vector->size;i++){
 			vector->items[i] = vector->items[i+1];
 		}
 	break;
 	case REMP_FAST:
-		freeMem(vector->items[index],vector->item_sizeof);
+		vector->size--;
+		vector->rmv(vector->items[index]);
 		vector->items[index] = vector->items[vector->size];
 	break;
 	case REMP_LAZY:
-		freeMem(vector->items[index],vector->item_sizeof);
+		vector->rmv(vector->items[index]);
 		vector->items[index] = NULL;
+		vector->fragmental++;
 	break;
 	default:
 		fprintf(stderr,"UNKNOWN POLICY %d\n", vector->REMOVE_POLICY);
@@ -93,6 +152,12 @@ int vector_remove(vector_t *vector, size_t index){
 }
 
 void vector_clear( vector_t *vector){
+	int i;
+	for(i=0;i<vector->size;i++){
+		vector->rmv(vector->items[i]);
+		vector->items[i] = NULL;
+	}
+
 	vector->size = 0;
 }
 
@@ -119,30 +184,50 @@ void *vector_head(vector_t *vector){
 	return vector->items[0];
 }
 
-int vector_free( vector_t *vector){
+void vector_free( void *v){
+	vector_t *vector = v;
+	if(vector==NULL){return;}
 	int i;
 	for(i = 0; i< vector->size;i++){
-		freeMem(vector->items[i],vector->item_sizeof);
+		vector->rmv(vector->items[i]);
 	}
 	freeMem(vector->items,vector->limit * sizeof(void *));
 	freeMem(vector,sizeof(vector_t));
-	return 0;
 }
 
-int test(int argc, char **argv){
-	vector_t *vector = vector_init(sizeof(int),4);
+int vector_test(int argc, char **argv){
 	vector_t *v2 = vector_init(sizeof(int),4);
 	int i,j;
 	for(j=0;j<10;j++){
 //		vector_put(vector,&i);
-		vector_soft_put(v2,&j);
+		vector_put(v2,&j);
 	}
-	int *element;
+	v2->REMOVE_POLICY = REMP_LAZY;
+
+	printf("Vector Size is %zu\n",v2->size);
+	vector_remove(v2,3);
+	vector_remove(v2,7);
+	vector_remove(v2,8);
+	i=-26;
+
+
+	vector_insert(v2,&i,7);
+	vector_defragment(v2);
+
 	for(i=0;i<v2->size;i++){
-		element = vector_get(v2,i);		
-		printf("%d\n",*element);
+		printf("%d, ",*(int *)vector_get(v2,i));
 	}
-//	vector_free(vector);
+	printf("\n");
+
+	printf("Vector Size is %zu\n",v2->size);
+	for(i=0;i<15;i++){
+		printf("Contains: %d -> %d\n",i,vector_contains(v2,&i));
+//		printf("%d - %d\n",*((int**)*(void**)v2)[i],v2->items[i]);
+	}
+	vector_free(v2);
 	return 0;
 }
 
+void vector_set_remove_function(vector_t *vector, void (*rmv)(void *)){
+	vector->rmv = rmv;
+}

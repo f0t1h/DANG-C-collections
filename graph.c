@@ -1,51 +1,35 @@
 #include "DANG/graph.h"
 
-
-
 graph_t *graph_init(size_t init_size, size_t node_size){
         graph_t *new_graph = ht_init(init_size, node_size, sizeof(vector_t));
-        return new_graph;
+        new_graph->val_rmv = &vector_free;
+	return new_graph;
 }
 
 void graph_put_node(graph_t *g, void *item){
         vector_t *edges = ht_put(g,item);
-//        edges = vector_init(sizeof(g->key_size),INIT_EDGE_COUNT);
-	edges->item_sizeof = g->key_size;
+	edges->item_sizeof = sizeof(void**);
 	edges->items = (void **) getMem(sizeof(void *) * INIT_EDGE_COUNT);
 	edges->limit = INIT_EDGE_COUNT;
 	edges->size = 0;
+	edges->rmv = &free;
+	edges->fragmental = 0;
 	edges->REMOVE_POLICY = 0;
 }
 
 void graph_put_edge(graph_t *g, void *i1, void *i2){
 
         vector_t *e1 = ht_get_value(g,i1);
-        if(e1==NULL){
+        void *e2 = ht_get(g,i2)->key;
+	if(e1==NULL){
                 fprintf(stderr,"NULL NODE e1\n");
         }
-	int c1= vector_contains(e1,i2);
-	printf("%d-%d-c1=%d\n",*(int *)i1, *(int *)i2,c1);
 //TODO: Fix contains do contains check
-//        if(vector_contains(e1,i2)==-1){
-         vector_put(e1,i2);
-  //      }
-/*
-        vector_t *e2 = ht_get_value(g,i2);
-
-        if(e2==NULL){
-                fprintf(stderr,"NULL NODE e2\n");
-        }
-	int c2= vector_contains(e2,i1);
-	printf("%d-%d-c1=%d\n",*(int *)i1, *(int *)i2,c2);
-        
-        if(vector_contains(e2,&i1)==-1){
-                vector_put(e2,i1);
-        }
-*/
+         vector_put(e1,&e2);
 }
 
 void graph_free(graph_t *g){
-	int i,j,k;
+/*	int i,j,k;
 	vector_t *bucket;
 	pair_t *pair;
 	vector_t *vect;
@@ -60,41 +44,160 @@ void graph_free(graph_t *g){
 			free(vect->items);
 		}	
 	}
+*/
 	ht_free(g);
 }
 
+int graph_have_node(graph_t *g, void *item){
+	return ht_get(g,item)!=NULL;
+}
 
-int main(int argc, char **argv){
+vector_t *graph_get_edges(graph_t *g, void *item){
+	return ht_get_value(g,item);
+}
+
+void graph_trim(graph_t *g){
+	int i;
+	adjlist_t *al = graph_to_al(g);
+	for(i=0;i<al->size;i++){
+		vector_t *edges = al_get_edges(al,i);
+		if(edges->size ==0){
+			void *item = al_get_value(al,i);
+			graph_remove_node(g,item,G_REMOVE_SOFT);
+		}
+	}
+	vector_free(al);
+}
+
+int graph_remove_node(graph_t *g, void *item, int hard){
+	if(!graph_have_node(g,item)){return -1;}
+
+	int i,j;
+	adjlist_t *adj;	vector_t *neigh;
+	vector_t *edges;
+	switch(hard){
+	case G_REMOVE_HARD:
+		adj= graph_to_al(g);
+		for(i=0;i<adj->size;i++){
+			edges = al_get_edges(adj,i);
+			int idx = vector_contains(edges,&item);
+			if(idx!=-1){
+				vector_remove(edges,idx);
+			}
+		}
+		vector_free(adj);
+	break;
+	case G_REMOVE_UNDIRECTED:
+		neigh = graph_get_edges(g,item);
+		for(i=0;i<neigh->size;i++){
+			edges = graph_get_edges(g,*(void **)vector_get(neigh,i));
+			if(edges==NULL){continue;}
+			for(j=0;j<edges->size;j++){
+				if(memcmp(item,*(void**)vector_get(edges,j),edges->item_sizeof)){
+//					printf("found edges at %d-%d\n",i,j);
+					vector_remove(edges,j);
+					break;
+				}
+
+			}
+			//assert(j!=edges->size);
+		}
+	break;
+	case G_REMOVE_SOFT:
+	break;
+	}
+
+	ht_remove(g,item);
+	return 0;
+}
+
+void graph_set_rem_function(graph_t *g, void (*rmv)(void*)){
+	g->key_rmv = rmv;
+}
+int adj_degree_comp(const void *i1, const void *i2){
+	const pair_t * const *pp1 = i1;
+	const pair_t * const *pp2 = i2;
+	const pair_t *p1 = *pp1;
+	const pair_t *p2 = *pp2;
+	const vector_t *v1 = p1->value;
+	const vector_t *v2 = p2->value;
+	if( v1->size < v2->size) return 1;
+	if( v1->size > v2->size) return -1;
+	return -1;
+}
+
+
+//This can be written as a macro
+void al_sortbydegree(adjlist_t *g){
+	qsort(g->items,g->size,sizeof(void *),adj_degree_comp);
+}
+
+void *al_get_value(adjlist_t *g, size_t index){
+	pair_t *p = vector_get(g,index);
+	return p!=NULL?p->key:NULL;
+}
+
+vector_t *al_get_edges(adjlist_t *g, size_t index){
+	pair_t *p = vector_get(g,index);
+	return p!=NULL?p->value:NULL;
+}
+
+graph_iter_t *make_graph_iter(graph_t *g){
+	return make_ht_iterator(g);
+}
+
+graph_iter_t *graph_iter_copy(graph_iter_t *iter){
+	graph_iter_t *new_iter = getMem(sizeof(graph_iter_t));
+	memcpy(new_iter,iter,sizeof(graph_iter_t));
+	return new_iter;
+}
+int graph_iter_has_next(graph_iter_t *iter){
+	return ht_iter_has_next(iter);
+}
+int graph_iter_next(graph_iter_t *iter){
+	return ht_iter_next(iter);
+}
+void *graph_iter_get_value(graph_iter_t *iter){
+	return ht_iter_get_key(iter);
+}
+vector_t *graph_iter_get_edges(graph_iter_t *iter){
+	return ht_iter_get_value(iter);
+}
+void graph_iter_free(graph_iter_t *iter){
+	freeMem(iter,sizeof(graph_iter_t));
+}
+
+
+
+int main(){
+
 	graph_t *g = graph_init(4,sizeof(int));
+	int a = 5;
 
-	int k,t;
-
-	for(k=0;k<12;k++){
-		graph_put_node(g,&k);
+	graph_put_node(g, &a);
+	int t;
+	int b;
+	for(b=15;b<20;b++){
+		graph_put_node(g, &b);
+		t = b;
+		graph_put_edge(g, &a, &t);
 	}
 
-	for(k=0;k<6;k++){
-		int tmp = k +1;
-		graph_put_edge(g,&k,&tmp);
-		graph_put_edge(g,&tmp,&k);
+	vector_t *tups = graph_to_al(g); //graph_get_edges(g,&a);
+	int i;
+	pair_t *c;
+	vector_t *edges;
+	int **k;
+	for(i=0;i<tups->size;i++){
+		c = vector_get(tups,i);
+		printf("%d\n", *(int *)(c->key));
+		edges = c->value;
+		for(a=0;a<edges->size;a++){
+			k = vector_get(edges,a);
+			printf("\t%d\n",**k);
+		}
 	}
-	vector_t *pairs = ht_to_vector(g);
 
-	pair_t *tmp;
-	int *edge;
-	for(k=0;k<pairs->size;k++){
-		tmp = vector_get(pairs,k);
-		printf("key = %d\n", *(int *)tmp->key);
-		vector_t *edges = tmp->value;
 
-		for(t=0;t<edges->size;t++){
-			edge = vector_get(edges,t);
-			printf("\tedge = %d\n",*edge);
-		}		
-	}
-	vector_free(pairs);
-//	free(pairs->items);
-//	free(pairs);
-	graph_free(g);
 	return 0;
 }
