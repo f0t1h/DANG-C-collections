@@ -13,7 +13,6 @@ vector_t *vector_init(size_t item_sizeof, size_t initial_limit){
 }
 
 void vector_tabularasa(vector_t *vector){
-
 	int i;
 	for(i=0;i<vector->size;i++){
 		vector->items[i] = NULL;

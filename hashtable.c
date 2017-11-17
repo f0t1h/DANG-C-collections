@@ -174,7 +174,7 @@ void ht_remove(hashtable_t *table, void *key){
 
 vector_t *ht_to_vector(hashtable_t *table){
 	int i,j;
-	vector_t *set = vector_init(sizeof(pair_t),table->size);
+	vector_t *set = vector_init(sizeof(pair_t),table->number_of_items);
 	for(i=0;i<table->size;i++){
 		vector_t *bucket = table->buckets[i];
 		for(j=0;j<bucket->size;j++){
