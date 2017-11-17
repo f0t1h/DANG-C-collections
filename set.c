@@ -1,7 +1,7 @@
 #include "DANG/set.h"
 
 set_t *set_init( size_t table_size, size_t key_size){
-    return  ht_init(table_size, key_size, 1);
+    return  ht_init(table_size, key_size, 0);
 }
 
 vector_t *set_to_vector(set_t *set){
@@ -10,7 +10,8 @@ vector_t *set_to_vector(set_t *set){
     for(i=0;i<set->size;i++){
         vector_t *bucket = set->buckets[i];
         for(j=0;j<bucket->size;j++){
-            vector_put(v,*(void **)vector_get(bucket,j));
+            pair_t *dummy = vector_get(bucket,j);
+            vector_put(v,dummy->key);
         }
     }
     return v;
@@ -20,8 +21,8 @@ int set_put(set_t *set, void *item){
     if( set_has(set, item)){
         return 0;
     }
-    char *val =ht_put(set,item);
-    *val = 1;
+    ht_put(set,item);
+
     return 1;
 }
 
