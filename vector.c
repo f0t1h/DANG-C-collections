@@ -1,4 +1,47 @@
 #include "DANG/vector.h"
+
+void vector_execute_for_all(vector_t *v, void (*foo)(void *)){
+        int i;
+        for(i=0;i<v->size;i++){
+                foo(vector_get(v,i));
+        }
+}
+
+vector_t *vector_execute_for_all_and_save(vector_t *v, void *(*foo)(void *)){
+        int i;
+        vector_t *rt = vector_init(VECTOR_VARIABLE_SIZE,v->size);
+        for(i=0;i<v->size;i++){
+                vector_soft_put(rt,foo(vector_get(v,i)));
+        }
+        return rt;
+}
+
+void vector_filter(vector_t *vector, int (*check)(void *)){
+	int i;
+	int prev_policy = vector->REMOVE_POLICY;
+	vector->REMOVE_POLICY = REMP_LAZY;
+	
+	for(i=0;i<vector->size;i++){
+		if(!check(vector_get(vector,i))){
+			vector_remove(vector,i);
+		}
+	}
+	vector_defragment(vector);
+	vector->REMOVE_POLICY = prev_policy;
+}
+
+vector_t *vector_select(vector_t *vector, int (*check)(void *)){
+	int i;
+	vector_t *selected = vector_init(vector->item_sizeof,vector->size);
+	for(i=0;i<vector->size;i++){
+		if(check(vector_get(vector,i))){
+			vector_put(selected,vector_get(vector,i));
+		}
+	}
+	vector_zip(selected);
+	return selected;
+}
+
 vector_t *vector_init(size_t item_sizeof, size_t initial_limit){
 	vector_t *new_vector = (vector_t *) getMem( sizeof(vector_t));
 	new_vector->item_sizeof = item_sizeof;
@@ -194,38 +237,7 @@ void vector_free( void *v){
 	freeMem(vector,sizeof(vector_t));
 }
 
-int vector_test(int argc, char **argv){
-	vector_t *v2 = vector_init(sizeof(int),4);
-	int i,j;
-	for(j=0;j<10;j++){
-//		vector_put(vector,&i);
-		vector_put(v2,&j);
-	}
-	v2->REMOVE_POLICY = REMP_LAZY;
 
-	printf("Vector Size is %zu\n",v2->size);
-	vector_remove(v2,3);
-	vector_remove(v2,7);
-	vector_remove(v2,8);
-	i=-26;
-
-
-	vector_insert(v2,&i,7);
-	vector_defragment(v2);
-
-	for(i=0;i<v2->size;i++){
-		printf("%d, ",*(int *)vector_get(v2,i));
-	}
-	printf("\n");
-
-	printf("Vector Size is %zu\n",v2->size);
-	for(i=0;i<15;i++){
-		printf("Contains: %d -> %d\n",i,vector_contains(v2,&i));
-//		printf("%d - %d\n",*((int**)*(void**)v2)[i],v2->items[i]);
-	}
-	vector_free(v2);
-	return 0;
-}
 
 void vector_set_remove_function(vector_t *vector, void (*rmv)(void *)){
 	vector->rmv = rmv;

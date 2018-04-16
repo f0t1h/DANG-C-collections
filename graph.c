@@ -93,7 +93,7 @@ int graph_remove_node(graph_t *g, void *item, int hard){
 			edges = graph_get_edges(g,*(void **)vector_get(neigh,i));
 			if(edges==NULL){continue;}
 			for(j=0;j<edges->size;j++){
-				if(memcmp(item,*(void**)vector_get(edges,j),edges->item_sizeof)){
+				if(memcmp(item,*(void**)vector_get(edges,j),edges->item_sizeof)==0){
 //					printf("found edges at %d-%d\n",i,j);
 					vector_remove(edges,j);
 					break;
